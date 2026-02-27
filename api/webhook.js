@@ -1,10 +1,11 @@
-const express = require("express");
-const crypto = require("crypto");
-const axios = require("axios");
+import crypto from "crypto";
+import axios from "axios";
 
-const router = express.Router();
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method not allowed" });
+  }
 
-router.post("/", async (req, res) => {
   try {
     const body = req.body;
 
@@ -24,6 +25,7 @@ router.post("/", async (req, res) => {
       .digest("hex");
 
     if (hash !== signature_key) {
+      console.error("Invalid signature");
       return res.status(403).send("Invalid signature");
     }
 
@@ -45,9 +47,7 @@ router.post("/", async (req, res) => {
 
     return res.status(200).send("OK");
   } catch (error) {
-    console.error(error);
+    console.error("Webhook error:", error);
     return res.status(500).send("Server error");
   }
-});
-
-module.exports = router;
+}
