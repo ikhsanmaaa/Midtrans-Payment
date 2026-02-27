@@ -2,28 +2,20 @@ import crypto from "crypto";
 import axios from "axios";
 
 export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method not allowed" });
+  }
+
   try {
-    console.log("Webhook hit");
-    console.log("Method:", req.method);
-    console.log("Body:", req.body);
-
-    if (req.method !== "POST") {
-      return res.status(405).end();
-    }
-
     const body = req.body;
 
-    if (!body) {
-      console.error("Body is empty");
-      return res.status(400).send("No body");
-    }
-
-    const { order_id, status_code, gross_amount, signature_key } = body;
-
-    if (!order_id) {
-      console.error("order_id missing");
-      return res.status(400).send("Invalid body");
-    }
+    const {
+      order_id,
+      status_code,
+      gross_amount,
+      signature_key,
+      transaction_status,
+    } = body;
 
     const hash = crypto
       .createHash("sha512")
@@ -37,12 +29,10 @@ export default async function handler(req, res) {
       return res.status(403).send("Invalid signature");
     }
 
-    // 🔥 BALAS DULU KE MIDTRANS
-    res.status(200).send("OK");
+    console.log("Webhook verified:", order_id);
 
-    // Forward async
-    axios
-      .post(
+    if (order_id.startsWith("CAFEAPP-")) {
+      axios.post(
         "https://gxdtcyyjkqltlnwjzncl.supabase.co/functions/v1/midtrans-webhook",
         body,
         {
@@ -51,10 +41,19 @@ export default async function handler(req, res) {
             "Content-Type": "application/json",
           },
         },
-      )
-      .catch(console.error);
+      );
+    }
+
+    if (order_id.startsWith("MERN-")) {
+      await axios.post(
+        "https://mern-project-gamma-jet.vercel.app/midtrans/webhook",
+        body,
+      );
+    }
+
+    return res.status(200).send("OK");
   } catch (error) {
-    console.error("WEBHOOK ERROR:", error);
+    console.error("Webhook error:", error);
     return res.status(500).send("Server error");
   }
 }
