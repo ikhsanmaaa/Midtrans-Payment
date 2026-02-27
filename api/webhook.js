@@ -29,13 +29,6 @@ export default async function handler(req, res) {
       await axios.post(
         "https://gxdtcyyjkqltlnwjzncl.supabase.co/functions/v1/midtrans-webhook",
         body,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.SUPABASE_PUBLISHABLE_KEY}`,
-            apikey: process.env.SUPABASE_PUBLISHABLE_KEY,
-            "Content-Type": "application/json",
-          },
-        },
       );
 
       console.log("Supabase forward success");
