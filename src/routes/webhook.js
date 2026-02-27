@@ -29,15 +29,18 @@ router.post("/", async (req, res) => {
 
     console.log("Webhook verified:", order_id);
 
-    if (order_id.startsWith("SUPA-")) {
+    if (order_id.startsWith("RPOS-")) {
       await axios.post(
-        "https://your-supabase-url/functions/v1/midtrans-webhook",
+        "https://gxdtcyyjkqltlnwjzncl.supabase.co/functions/v1/midtrans-webhook",
         body,
       );
     }
 
-    if (order_id.startsWith("WEB-")) {
-      await axios.post("https://your-express-app.com/midtrans/webhook", body);
+    if (order_id.startsWith("MERN-")) {
+      await axios.post(
+        "https://mern-project-gamma-jet.vercel.app/midtrans/webhook",
+        body,
+      );
     }
 
     return res.status(200).send("OK");
