@@ -26,15 +26,11 @@ export default async function handler(req, res) {
     console.log("Webhook verified:", order_id);
 
     if (order_id.startsWith("CAFEAPP-")) {
-      console.log("Forwarding to Supabase...");
-
       await axios.post(
         "https://gxdtcyyjkqltlnwjzncl.supabase.co/functions/v1/midtrans-webhook",
         body,
         {
           headers: {
-            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-            apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
             "Content-Type": "application/json",
           },
         },
