@@ -9,13 +9,7 @@ export default async function handler(req, res) {
   try {
     const body = req.body;
 
-    const {
-      order_id,
-      status_code,
-      gross_amount,
-      signature_key,
-      transaction_status,
-    } = body;
+    const { order_id, status_code, gross_amount, signature_key } = body;
 
     const hash = crypto
       .createHash("sha512")
@@ -32,16 +26,21 @@ export default async function handler(req, res) {
     console.log("Webhook verified:", order_id);
 
     if (order_id.startsWith("CAFEAPP-")) {
-      axios.post(
+      console.log("Forwarding to Supabase...");
+
+      await axios.post(
         "https://gxdtcyyjkqltlnwjzncl.supabase.co/functions/v1/midtrans-webhook",
         body,
         {
           headers: {
-            Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
+            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
             "Content-Type": "application/json",
           },
         },
       );
+
+      console.log("Supabase forward success");
     }
 
     if (order_id.startsWith("MERN-")) {
@@ -53,7 +52,7 @@ export default async function handler(req, res) {
 
     return res.status(200).send("OK");
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("Webhook error:", error.response?.data || error);
     return res.status(500).send("Server error");
   }
 }
