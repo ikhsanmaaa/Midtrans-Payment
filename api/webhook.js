@@ -2,20 +2,28 @@ import crypto from "crypto";
 import axios from "axios";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
-
   try {
+    console.log("Webhook hit");
+    console.log("Method:", req.method);
+    console.log("Body:", req.body);
+
+    if (req.method !== "POST") {
+      return res.status(405).end();
+    }
+
     const body = req.body;
 
-    const {
-      order_id,
-      status_code,
-      gross_amount,
-      signature_key,
-      transaction_status,
-    } = body;
+    if (!body) {
+      console.error("Body is empty");
+      return res.status(400).send("No body");
+    }
+
+    const { order_id, status_code, gross_amount, signature_key } = body;
+
+    if (!order_id) {
+      console.error("order_id missing");
+      return res.status(400).send("Invalid body");
+    }
 
     const hash = crypto
       .createHash("sha512")
@@ -29,29 +37,24 @@ export default async function handler(req, res) {
       return res.status(403).send("Invalid signature");
     }
 
-    console.log("Webhook verified:", order_id);
+    // 🔥 BALAS DULU KE MIDTRANS
+    res.status(200).send("OK");
 
-    await axios.post(
-      "https://gxdtcyyjkqltlnwjzncl.supabase.co/functions/v1/midtrans-webhook",
-      body,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-      },
-    );
-
-    if (order_id.startsWith("MERN-")) {
-      await axios.post(
-        "https://mern-project-gamma-jet.vercel.app/midtrans/webhook",
+    // Forward async
+    axios
+      .post(
+        "https://gxdtcyyjkqltlnwjzncl.supabase.co/functions/v1/midtrans-webhook",
         body,
-      );
-    }
-
-    return res.status(200).send("OK");
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
+            "Content-Type": "application/json",
+          },
+        },
+      )
+      .catch(console.error);
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("WEBHOOK ERROR:", error);
     return res.status(500).send("Server error");
   }
 }
