@@ -31,6 +31,8 @@ export default async function handler(req, res) {
         body,
         {
           headers: {
+            Authorization: `Bearer ${process.env.SUPABASE_PUBLISHABLE_KEY}`,
+            apikey: process.env.SUPABASE_PUBLISHABLE_KEY,
             "Content-Type": "application/json",
           },
         },
